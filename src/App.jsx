@@ -15,30 +15,35 @@ function App() {
   const [currentMotivation, setCurrentMotivation] = useState('');
 
   useEffect(() => {
-    // Load saved data from localStorage (fallback)
+    // Load saved data from localStorage (temporary until Firebase is properly configured)
     const loadSavedData = async () => {
       try {
-        const today = new Date().toISOString().split('T')[0];
-        const progressData = await progressService.getDailyProgress(today);
+        // For now, just use localStorage
+        const savedCompleted = localStorage.getItem('completedTasks');
+        const savedPoints = localStorage.getItem('totalPoints');
 
-        if (progressData) {
-          setCompletedTasks(progressData.completedTasks || []);
-          setTotalPoints(progressData.totalPoints || 0);
-        } else {
-          // Fallback to localStorage
-          const savedCompleted = localStorage.getItem('completedTasks');
-          const savedPoints = localStorage.getItem('totalPoints');
+        if (savedCompleted) {
+          setCompletedTasks(JSON.parse(savedCompleted));
+        }
+        if (savedPoints) {
+          setTotalPoints(parseInt(savedPoints));
+        }
 
-          if (savedCompleted) {
-            setCompletedTasks(JSON.parse(savedCompleted));
+        // Try Firestore but don't fail if it doesn't work
+        try {
+          const today = new Date().toISOString().split('T')[0];
+          const progressData = await progressService.getDailyProgress(today);
+
+          if (progressData) {
+            setCompletedTasks(progressData.completedTasks || []);
+            setTotalPoints(progressData.totalPoints || 0);
           }
-          if (savedPoints) {
-            setTotalPoints(parseInt(savedPoints));
-          }
+        } catch (firestoreError) {
+          console.log('Firestore not configured yet, using localStorage only');
         }
       } catch (error) {
         console.error('Error loading saved data:', error);
-        // Fallback to localStorage
+        // Always fallback to localStorage
         const savedCompleted = localStorage.getItem('completedTasks');
         const savedPoints = localStorage.getItem('totalPoints');
 
